@@ -3,6 +3,7 @@ class Figure():
         self.color = color
         self.place = place
 
+
 class King(Figure):
     def __init__(self, color, place):
         super().__init__(color, place)
@@ -12,9 +13,11 @@ class King(Figure):
         elif self.color == 'White':
             self.photopath = 'C:\\Users\\Roman-laptop\\PycharmProjects\\CHESS_ENDGAME\\venv\\imgs\\white-king.png'
 
+
 class Rook(Figure):
     def __init__(self, *args, **kw):
         self.f_type = 'Rook'
+
 
 class Queen(Figure):
     def __init__(self, *args, **kw):

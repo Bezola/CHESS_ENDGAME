@@ -3,6 +3,7 @@ import sys
 import tkinter as tk
 import register
 import board_render
+import game_representation as game_rep
 from time import sleep
 import asyncio
 
@@ -107,7 +108,8 @@ class WindowManager():
                                      highlightthickness=0)
             board_canvas.place(x=100, y=100)
             board_render.draw_board(board_canvas, 800, 800)
-            board_canvas.bind("<Button-1>", board_render.detect_square)
+            white_king = game_rep.King('White', [None, None])
+            board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas, white_king))
 
 
 # ------------Programm initializaion

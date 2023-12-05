@@ -19,12 +19,10 @@ def draw_board(board_canvas, height=800, width=800):
         quad_w += 100
 
 
-def detect_square(event):
+def detect_square(event, board_canvas, white_king):
     x = event.x // 100
     y = event.y // 100
-    white_king = game_rep.King('White', [x, y])
     print(x * 100, y * 100)
-    img = (Image.open(white_king.photopath)).resize((80, 80))
-    rofl_image = ImageTk.PhotoImage(img)
-    event.widget.create_image(x * 100 + 10, y * 100 + 10, anchor='nw', image=rofl_image)
-    event.widget.create_text(specially_wrong_parameter=None)
+    board_canvas.delete("all"), draw_board(board_canvas)
+    event.widget.create_image(x * 100 + 10, y * 100 + 10, anchor='nw', image=white_king.photo)
+    # event.widget.create_text(specially_wrong_parameter=None)

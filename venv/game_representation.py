@@ -1,3 +1,5 @@
+from PIL import Image, ImageTk
+
 class Figure():
     def __init__(self, color, place):
         self.color = color
@@ -9,9 +11,9 @@ class King(Figure):
         super().__init__(color, place)
         self.f_type = 'King'
         if self.color == 'Black':
-            self.photopath = 'C:\\Users\\Roman-laptop\\PycharmProjects\\CHESS_ENDGAME\\venv\\imgs\\black-king.png'
+            self.photo = ImageTk.PhotoImage((Image.open('imgs\\black-king.png')).resize((80, 80)))
         elif self.color == 'White':
-            self.photopath = 'C:\\Users\\Roman-laptop\\PycharmProjects\\CHESS_ENDGAME\\venv\\imgs\\white-king.png'
+            self.photo = ImageTk.PhotoImage((Image.open('imgs\\white-king.png')).resize((80, 80)))
 
 
 class Rook(Figure):

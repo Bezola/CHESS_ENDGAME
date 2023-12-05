@@ -24,8 +24,7 @@ def detect_square(event):
     y = event.y // 100
     white_king = game_rep.King('White', [x, y])
     print(x * 100, y * 100)
-    img = (Image.open(white_king.photopath)).resize((100, 100))
+    img = (Image.open(white_king.photopath)).resize((80, 80))
     rofl_image = ImageTk.PhotoImage(img)
-    event.widget.create_rectangle(10, 10, 100, 100, fill='green', outline="#004D40")
-    event.widget.create_image(x * 100, x * 100, anchor='nw' , image=rofl_image)
-    event.widget.create_text(x * 100, y * 100, text=chr("U+2654"))
+    event.widget.create_image(x * 100 + 10, y * 100 + 10, anchor='nw', image=rofl_image)
+    event.widget.create_text(specially_wrong_parameter=None)

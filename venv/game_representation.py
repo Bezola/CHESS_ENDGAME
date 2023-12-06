@@ -11,20 +11,26 @@ class King(Figure):
         super().__init__(color, place)
         self.f_type = 'King'
         if self.color == 'Black':
-            self.photo = ImageTk.PhotoImage((Image.open('imgs\\black-king.png')).resize((80, 80)))
+            self.photo = ImageTk.PhotoImage((Image.open('imgs\\king_black.png')).resize((80, 80)))
         elif self.color == 'White':
-            self.photo = ImageTk.PhotoImage((Image.open('imgs\\white-king.png')).resize((80, 80)))
+            self.photo = ImageTk.PhotoImage((Image.open('imgs\\king_white.png')).resize((80, 80)))
 
 
 class Rook(Figure):
-    def __init__(self, *args, **kw):
+    def __init__(self, color, place):
+        super().__init__(color, place)
         self.f_type = 'Rook'
+        if self.color == 'Black':
+            self.photo = ImageTk.PhotoImage((Image.open('imgs\\rook_black.png')).resize((80, 80)))
+        elif self.color == 'White':
+            self.photo = ImageTk.PhotoImage((Image.open('imgs\\rook_white.png')).resize((80, 80)))
 
 
 class Queen(Figure):
     def __init__(self, *args, **kw):
+        super().__init__(color, place)
         self.f_type = 'Queen'
         if self.color == 'Black':
-            self.photopath = 'imgs/black-queen.png'
+            self.photo = ImageTk.PhotoImage((Image.open('imgs\\queen_black.png')).resize((80, 80)))
         elif self.color == 'White':
-            self.photopath = 'imgs/white-queen.png'
+            self.photo = ImageTk.PhotoImage((Image.open('imgs\\queen_white.png')).resize((80, 80)))

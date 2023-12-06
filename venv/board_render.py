@@ -19,10 +19,22 @@ def draw_board(board_canvas, height=800, width=800):
         quad_w += 100
 
 
-def detect_square(event, board_canvas, white_king):
+def detect_square(event, board_canvas, figure):
     x = event.x // 100
     y = event.y // 100
     print(x * 100, y * 100)
     board_canvas.delete("all"), draw_board(board_canvas)
-    event.widget.create_image(x * 100 + 10, y * 100 + 10, anchor='nw', image=white_king.photo)
+    if not figure.place[0] is None:
+        if (figure.place[0] + figure.place[1]) % 2 == 0:
+            color = '#D4D087'  # Тёмно-схоженный
+        else:
+            color = '#DDE9AE'  # Светло-схоженный
+        board_canvas.create_rectangle(figure.place[0] * 100, figure.place[1] * 100, figure.place[0] * 100 + 100, figure.place[1] * 100 + 100, fill=color, outline="#004D40")
+    figure.place = [x, y]
+    if (x + y) % 2 == 0:
+        color = '#D4D087'  # Тёмно-схоженный
+    else:
+        color = '#DDE9AE'  # Светло-схоженный
+    board_canvas.create_rectangle(x * 100, y * 100, x * 100 + 100, y * 100 + 100, fill=color, outline="#004D40")
+    event.widget.create_image(x * 100 + 10, y * 100 + 10, anchor='nw', image=figure.photo)
     # event.widget.create_text(specially_wrong_parameter=None)

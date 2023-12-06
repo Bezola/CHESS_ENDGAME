@@ -108,8 +108,8 @@ class WindowManager():
                                      highlightthickness=0)
             board_canvas.place(x=100, y=100)
             board_render.draw_board(board_canvas, 800, 800)
-            white_king = game_rep.King('White', [None, None])
-            board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas, white_king))
+            figure = game_rep.Rook('White', [None, None])
+            board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas, figure))
 
 
 # ------------Programm initializaion

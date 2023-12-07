@@ -25,7 +25,7 @@ def window_in_center(work_window, w=100, h=100):
 
 # -------------Classes
 
-class WindowManager():
+class WindowManager:
     def __init__(self, master):
         self.register_window = None
         self.root_window = None
@@ -107,9 +107,12 @@ class WindowManager():
             board_canvas = tk.Canvas(self.root_window, background='#dfd3b1', height=801, width=801,
                                      highlightthickness=0)
             board_canvas.place(x=100, y=100)
-            board_render.draw_board(board_canvas, 800, 800)
-            figure = game_rep.Rook('White', [None, None])
-            board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas, figure))
+
+            board_object = game_rep.GameBoard()
+            board_object.random_content()
+            board_render.draw_board(board_canvas, board_object, 800, 800)
+
+            board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas, board_object, board_object.figure_dict['black_king']))
 
 
 # ------------Programm initializaion

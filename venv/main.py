@@ -112,7 +112,7 @@ class WindowManager:
             board_object.random_content()
             board_render.draw_board(board_canvas, board_object, 800, 800)
 
-            board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas, board_object, board_object.figure_dict['black_king']))
+            board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas, board_object))
 
 
 # ------------Programm initializaion

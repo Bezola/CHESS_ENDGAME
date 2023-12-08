@@ -57,6 +57,9 @@ class GameBoard:
             'queen': None
         }
         self.board_matrix = np.zeros((8, 8))
+        self.focus_square = [None, None]
+        self.focus_figure = None
+        self.move_side = 1  # white = 1, black = -1
 
     def random_content(self):
         self.figure_dict['black_king'] = King('Black', [random.randint(0, 7), random.randint(0, 7)])

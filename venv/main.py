@@ -107,17 +107,18 @@ class WindowManager:
             board_canvas = tk.Canvas(self.root_window, background='#dfd3b1', height=801, width=801,
                                      highlightthickness=0)
             board_canvas.place(x=100, y=100)
+            label_show_side = tk.Label(self.root_window, text='Ход белых', font=font, anchor='center', width=10)
+            label_show_side.place(x=430, y=925)
 
             board_object = game_rep.GameBoard()
             board_object.random_content()
             board_render.draw_board(board_canvas, board_object, 800, 800)
 
-            board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas, board_object))
+            board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas,
+                                                                                     board_object, label_show_side))
 
 
 # ------------Programm initializaion
 
 start_window = tk.Tk()
 app = WindowManager(start_window)
-
-# ------------Board-drawing

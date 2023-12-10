@@ -8,7 +8,8 @@ from tkinter.messagebox import showwarning, showinfo
 pswrd_hardcode = string.ascii_lowercase + string.ascii_uppercase + '1234567890!@#$%^&*()_+'
 vigenere_dict = dict(zip(pswrd_hardcode, range(1, len(pswrd_hardcode) + 1)))
 
-#------------Classes
+
+# ------------Classes
 
 class objectWrapper:
     def __init__(self, initial_value):
@@ -17,16 +18,19 @@ class objectWrapper:
     def __repr__(self):
         return repr(self._value)
 
+
 pass_flag = objectWrapper(False)
 
-#------------Functions
+
+# ------------Functions
 
 def password_ableness(symbol):
     return re.fullmatch(r"[a-zA-Z\d!@#$%^&*()_+]*", symbol) is not None
 
+
 def vigenere_code(arrived_message, mode='code', key='default'):
     arrived_list = list(arrived_message)
-    sub_list, str_answer, count = [],'', 0
+    sub_list, str_answer, count = [], '', 0
     for i in arrived_list:
         sub_list.append(key[count])
         count += 1
@@ -45,6 +49,7 @@ def vigenere_code(arrived_message, mode='code', key='default'):
 
         str_answer += list(vigenere_dict.keys())[list(vigenere_dict.values()).index(new_char_num)]
     return str_answer
+
 
 def login(login_window, login_box, password_box):
     login_name = vigenere_code(login_box.get())

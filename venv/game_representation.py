@@ -19,6 +19,7 @@ class King(Figure):
     def __init__(self, color, place):
         super().__init__(color, place)
         self.f_type = 4
+        self.IsChecked = False
         if self.color == 'Black':
             self.photo = ImageTk.PhotoImage((Image.open('imgs\\king_black.png')).resize((80, 80)))
             self.f_type *= -1
@@ -52,12 +53,7 @@ class GameBoard:
     def __init__(self):
         self.move_indicator = ImageTk.PhotoImage((Image.open('imgs\\move-indicator.png')).resize((48, 36)))
         self.capture_indicator = ImageTk.PhotoImage((Image.open('imgs\\capture-indicator.png')).resize((100, 100)))
-        self.figure_dict = {
-            'black_king': None,
-            'white_king': None,
-            'rook': None,
-            'queen': None
-        }
+        self.figure_dict = {}
         self.board_matrix = np.zeros((8, 8))
         self.focus_square = [None, None]
         self.focus_figure = None
@@ -71,92 +67,94 @@ class GameBoard:
         cords_list = [temp]
         start_figures_id = random.randint(0, 1)
 
-        for figure_name in ['black_king', 'white_king', 'rook', 'queen']:
+        for figure_name in ['rook', 'queen', 'white_king']:
             while True:
                 temp = [random.randint(0, 7), random.randint(0, 7)]
                 if temp not in cords_list:
-                    cords_list.append(temp)
-                    if figure_name == 'white_king':
+                    if (figure_name == 'white_king' and not self.isKingInCheck(King('White', temp)) and
+                            (temp not in self.generate_moves(self.figure_dict['black_king'], False, -1)[0])):
                         self.figure_dict[figure_name] = King('White', temp)
+                        cords_list.append(temp)
+                        break
                     if figure_name == 'rook':
                         self.figure_dict[figure_name] = Rook(['White', 'Black'][start_figures_id], temp)
+                        if self.isKingInCheck(self.figure_dict['black_king']):
+                            self.figure_dict[figure_name] = self.figure_dict.pop(figure_name)
+                        else:
+                            cords_list.append(temp)
+                            break
                     if figure_name == 'queen':
-                        if start_figures_id == 0:
+                        if self.figure_dict['rook'].f_type > 0:
                             start_figures_id = 1
                         else:
                             start_figures_id = 0
                         self.figure_dict[figure_name] = Queen(['White', 'Black'][start_figures_id], temp)
-                    break
+                        if self.isKingInCheck(self.figure_dict['black_king']):
+                            self.figure_dict[figure_name] = self.figure_dict.pop(figure_name)
+                        else:
+                            cords_list.append(temp)
+                            break
             temp = self.figure_dict[figure_name].place
             self.board_matrix[temp[0]][temp[1]] = self.figure_dict[figure_name].f_type
         print(self.board_matrix.transpose())
 
+    def generate_moves(self, figure, func_recall=True, move_side=None):  # Просчёт правомерных ходов
+        if move_side is None:
+            move_side = self.move_side
+        lawfulmoves_list = []
+        lawfulcaptures_list = []
 
-def generate_moves(board_obj, figure):
-    lawfulmoves_list = []
-    lawfulcaptures_list = []
-
-    if type(figure) is not King:  # Ходы для ладьи и Королевы
-        for x in [-1, 1]:
-            check_x = x
-            while (figure.place[0] + check_x) in range(8):  # Горизонталь
-                if board_obj.board_matrix[figure.place[0] + check_x, figure.place[1]] * board_obj.move_side < 0:
-                    lawfulcaptures_list.append([figure.place[0] + check_x, figure.place[1]])
-                    break
-                elif board_obj.board_matrix[figure.place[0] + check_x][figure.place[1]] * board_obj.move_side > 0:
-                    break
-                else:
-                    lawfulmoves_list.append([figure.place[0] + check_x, figure.place[1]])
-                    check_x += x
-        for y in [-1, 1]:
-            check_y = y
-            while (figure.place[1] + check_y) in range(8):  # Вертикаль
-                if board_obj.board_matrix[figure.place[0], figure.place[1] + check_y] * board_obj.move_side < 0:
-                    lawfulcaptures_list.append([figure.place[0], figure.place[1] + check_y])
-                    break
-                elif board_obj.board_matrix[figure.place[0]][figure.place[1] + check_y] * board_obj.move_side > 0:
-                    break
-                else:
-                    lawfulmoves_list.append([figure.place[0], figure.place[1] + check_y])
-                    check_y += y
-
-        if type(figure) is Queen:  # Диагональ для королевы
-            for x in [-1, 1]:
-                for y in [-1, 1]:
+        for x in [-1, 0, 1]:
+            for y in [-1, 0, 1]:
+                if [x, y] != [0, 0]:
                     check_x = x
                     check_y = y
                     while (figure.place[0] + check_x) in range(8) and (figure.place[1] + check_y) in range(8):
-                        if board_obj.board_matrix[figure.place[0] + check_x][figure.place[1] + check_y] * board_obj.move_side < 0:
-                            lawfulcaptures_list.append([figure.place[0] + check_x, figure.place[1] + check_y])
-                            break
-                        elif board_obj.board_matrix[figure.place[0] + check_x][figure.place[1] + check_y] * board_obj.move_side > 0:
+                        if ((type(figure) is King and (abs(check_x) > 1 or abs(check_y) > 1))
+                                or (type(figure) is Rook and x != 0 and y != 0)):
                             break
                         else:
-                            lawfulmoves_list.append([figure.place[0] + check_x, figure.place[1] + check_y])
-                            check_x, check_y = check_x + x, check_y + y
-    else:
-        for x in range(8):
-            if figure.place[0] != x and figure.place[0] - 2 < x < figure.place[0] + 2:  # Горизонталь
-                if board_obj.board_matrix[x, figure.place[1]] * board_obj.move_side < 0:
-                    lawfulcaptures_list.append([x, figure.place[1]])
-                    break
-                else:
-                    lawfulmoves_list.append([x, figure.place[1]])
-        for y in range(8):
-            if figure.place[1] != y and figure.place[1] - 2 < y < figure.place[1] + 2:  # Вертикаль
-                if board_obj.board_matrix[figure.place[0], y] * board_obj.move_side < 0:
-                    lawfulcaptures_list.append([figure.place[0], y])
-                    break
-                else:
-                    lawfulmoves_list.append([figure.place[0], y])
+                            if self.board_matrix[figure.place[0] + check_x][figure.place[1] + check_y] * move_side < 0:  # Фигуры противника
+                                lawfulcaptures_list.append([figure.place[0] + check_x, figure.place[1] + check_y])
+                                if self.board_matrix[figure.place[0] + check_x][figure.place[1] + check_y] * move_side == -4:
+                                    check_x, check_y = check_x + x, check_y + y
+                                else:
+                                    break
+                            elif self.board_matrix[figure.place[0] + check_x][figure.place[1] + check_y] * move_side > 0:  # Свои фигуры
+                                break
+                            else:
+                                lawfulmoves_list.append([figure.place[0] + check_x, figure.place[1] + check_y])
+                                check_x, check_y = check_x + x, check_y + y
 
-        for x in [-1, 1]:  # Диагональ
-            for y in [-1, 1]:
-                if board_obj.board_matrix[figure.place[0] + x][figure.place[1] + y] * board_obj.move_side < 0:
-                    lawfulcaptures_list.append([figure.place[0] + x, figure.place[1] + y])
-                elif board_obj.board_matrix[figure.place[0] + x][figure.place[1] + y] * board_obj.move_side > 0:
-                    pass
-                else:
-                    lawfulmoves_list.append([figure.place[0] + x, figure.place[1] + y])
+        if type(figure) is King and func_recall:
+            for figure_name in ['black_king', 'white_king', 'rook', 'queen']:  # Удаление ходов подставляющих короля под бой
+                if figure_name in self.figure_dict and (self.figure_dict[figure_name].f_type * move_side) < 0:
+                    piece = self.figure_dict[figure_name]
+                    if type(piece) is King:
+                        for i in self.generate_moves(piece, False):
+                            for lawless_move in i:
+                                if lawless_move in lawfulmoves_list:
+                                    lawfulmoves_list.remove(lawless_move)
+                                if lawless_move in lawfulcaptures_list:
+                                    lawfulcaptures_list.remove(lawless_move)
+                    else:
+                        for i in self.generate_moves(piece, move_side=move_side * -1):
+                            for lawless_move in i:
+                                if lawless_move in lawfulmoves_list:
+                                    lawfulmoves_list.remove(lawless_move)
+                                if lawless_move in lawfulcaptures_list:
+                                    lawfulcaptures_list.remove(lawless_move)
+        return [lawfulmoves_list, lawfulcaptures_list]
 
-    return [lawfulmoves_list, lawfulcaptures_list]
+    def isKingInCheck(self, king, move_side=None):
+        if move_side is None:
+            move_side = self.move_side
+        for figure_name in ['rook', 'queen']:
+            if figure_name in self.figure_dict and king.place in self.generate_moves(self.figure_dict[figure_name], move_side=move_side)[1]:
+                if self.figure_dict[figure_name].f_type * move_side > 0:
+                    king.IsChecked = True
+                    return king.IsChecked
+            else:
+                king.IsChecked = False
+        return king.IsChecked
+

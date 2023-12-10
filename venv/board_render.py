@@ -1,15 +1,17 @@
 import tkinter as tk
+from winsound import PlaySound, SND_FILENAME, SND_ASYNC
 from PIL import Image, ImageTk
 import game_representation as game_rep
 
 
 def detect_figure(board_obj, i, j):
     for figure_name in ['black_king', 'white_king', 'rook', 'queen']:
-        if board_obj.figure_dict[figure_name].return_photo_by_int(board_obj.board_matrix[i][j])[0]:
+        if (board_obj.figure_dict[figure_name] is not None and
+                board_obj.figure_dict[figure_name].return_photo_by_int(board_obj.board_matrix[i][j])[0]):
             return board_obj.figure_dict[figure_name]
+    return None
 
 
-# ----------------------
 def draw_board(board_canvas, board_obj, height=800, width=800):
     quad_h, quad_w, place_x, place_y = height / 8, width / 8, 0, 0
     for i in range(8):
@@ -28,6 +30,10 @@ def draw_board(board_canvas, board_obj, height=800, width=800):
         place_y, quad_h = 0, 100
         place_x += 100
         quad_w += 100
+
+    for i in ['black_king', 'white_king']:
+        if board_obj.isKingInCheck(board_obj.figure_dict[i], board_obj.move_side * -1):
+            board_canvas.create_text(board_obj.figure_dict[i].place[0] * 100 + 75, board_obj.figure_dict[i].place[1] * 100 + 30, text="!", fill="#ff7a66", font='Arial 35')
 
 
 def draw_move(board_canvas, board_obj, figure, new_place, label_show_side):
@@ -53,6 +59,13 @@ def draw_move(board_canvas, board_obj, figure, new_place, label_show_side):
     else:
         label_show_side.config(text='Ход белых', bg='white', fg='black')
 
+    for i in ['black_king', 'white_king']:
+        if board_obj.figure_dict[i] is not None and board_obj.isKingInCheck(board_obj.figure_dict[i], board_obj.move_side):
+            board_canvas.create_text(board_obj.figure_dict[i].place[0] * 100 + 75,
+                                     board_obj.figure_dict[i].place[1] * 100 + 30, text="!", fill="#ff7a66",
+                                     font='Arial 35')
+            PlaySound('sounds\\check.wav', SND_FILENAME | SND_ASYNC)
+
 
 def detect_square(event, board_canvas, board_obj, label_show_side):
     x = event.x // 100
@@ -61,7 +74,7 @@ def detect_square(event, board_canvas, board_obj, label_show_side):
 
     if click_coord != board_obj.focus_square:
         if board_obj.board_matrix[x][y] != 0:
-            if board_obj.move_side == 1:  # ВЫБОР ФИГУРЫ/ВЗЯТИЕ БЕЛЫХ
+            if board_obj.move_side == 1:  # ВЫБОР ФИГУРЫ/ВЗЯТИЕ БЕЛЫМИ
                 if detect_figure(board_obj, x, y).f_type > 0:
                     board_obj.focus_square = click_coord
                     board_obj.focus_figure = detect_figure(board_obj, x, y)
@@ -69,8 +82,10 @@ def detect_square(event, board_canvas, board_obj, label_show_side):
                     draw_lawful_moves(board_canvas, board_obj)
 
                 if board_obj.focus_figure is not None:
-                    captures_list = game_rep.generate_moves(board_obj, board_obj.focus_figure)[1]
-                    if click_coord in captures_list and detect_figure(board_obj, x, y).f_type < 0:
+                    captures_list = board_obj.generate_moves(board_obj.focus_figure)[1]
+                    temp_obj = detect_figure(board_obj, x, y)
+                    if click_coord in captures_list and temp_obj.f_type < 0:
+                        board_obj.figure_dict.pop((str(type(temp_obj)).lower()).split('.')[1][:-2])
                         board_obj.focus_square = click_coord
                         prev_coord = board_obj.focus_figure.place
 
@@ -79,8 +94,9 @@ def detect_square(event, board_canvas, board_obj, label_show_side):
                         draw_move(board_canvas, board_obj, board_obj.focus_figure, click_coord, label_show_side)
                         board_obj.focus_figure = None
                         board_obj.move_side *= -1
+                        PlaySound('sounds\\capture.wav', SND_FILENAME | SND_ASYNC)
 
-            else:  # ВЫБОР ФИГУРЫ/ВЗЯТИЕ ЧЕРНЫХ
+            else:  # ВЫБОР ФИГУРЫ/ВЗЯТИЕ ЧЕРНЫМИ
                 if detect_figure(board_obj, x, y).f_type < 0:
                     board_obj.focus_square = click_coord
                     board_obj.focus_figure = detect_figure(board_obj, x, y)
@@ -88,8 +104,10 @@ def detect_square(event, board_canvas, board_obj, label_show_side):
                     draw_lawful_moves(board_canvas, board_obj)
 
                 if board_obj.focus_figure is not None:
-                    captures_list = game_rep.generate_moves(board_obj, board_obj.focus_figure)[1]
-                    if click_coord in captures_list and detect_figure(board_obj, x, y).f_type > 0:
+                    captures_list = board_obj.generate_moves(board_obj.focus_figure)[1]
+                    temp_obj = detect_figure(board_obj, x, y)
+                    if click_coord in captures_list and temp_obj.f_type > 0:
+                        board_obj.figure_dict.pop((str(type(temp_obj)).lower()).split('.')[1][:-2])
                         board_obj.focus_square = click_coord
                         prev_coord = board_obj.focus_figure.place
 
@@ -99,8 +117,11 @@ def detect_square(event, board_canvas, board_obj, label_show_side):
                         board_obj.focus_figure = None
                         board_obj.move_side *= -1
 
+                        PlaySound('sounds\\move.wav', SND_FILENAME | SND_ASYNC)
+                        PlaySound('sounds\\capture.wav', SND_FILENAME | SND_ASYNC)
+
         elif board_obj.focus_figure is not None and click_coord in \
-                game_rep.generate_moves(board_obj, board_obj.focus_figure)[0]:
+                board_obj.generate_moves(board_obj.focus_figure)[0]:
             prev_coord = board_obj.focus_figure.place
             board_obj.board_matrix[prev_coord[0]][prev_coord[1]] = 0
             board_obj.board_matrix[x][y] = board_obj.focus_figure.f_type
@@ -115,6 +136,8 @@ def detect_square(event, board_canvas, board_obj, label_show_side):
                 board_obj.board_matrix[x][y] = board_obj.focus_figure.f_type
                 board_obj.focus_figure = None
 
+                PlaySound('sounds\\move.wav', SND_FILENAME | SND_ASYNC)
+
             if detect_figure(board_obj, x, y).f_type > 0:  # Белые ход на пустую клетку
                 board_obj.focus_square = click_coord
                 prev_coord = board_obj.focus_figure.place
@@ -123,13 +146,22 @@ def detect_square(event, board_canvas, board_obj, label_show_side):
                 board_obj.board_matrix[x][y] = board_obj.focus_figure.f_type
                 board_obj.focus_figure = None
 
+                PlaySound('sounds\\move.wav', SND_FILENAME | SND_ASYNC)
+
         else:
+            board_canvas.delete('all'), draw_board(board_canvas, board_obj)
             board_obj.focus_figure, board_obj.focus_square = None, [None, None]
+    for i in ['black_king', 'white_king']:
+        if board_obj.figure_dict[i] is not None and board_obj.isKingInCheck(board_obj.figure_dict[i],
+                                                                            board_obj.move_side):
+            board_canvas.create_text(board_obj.figure_dict[i].place[0] * 100 + 75,
+                                     board_obj.figure_dict[i].place[1] * 100 + 30, text="!", fill="#ff7a66",
+                                     font='Arial 35')
 
 
 def draw_lawful_moves(board_canvas, board_obj):
     board_canvas.delete('all'), draw_board(board_canvas, board_obj)
-    for i in game_rep.generate_moves(board_obj, board_obj.focus_figure)[0]:
+    for i in board_obj.generate_moves(board_obj.focus_figure)[0]:
         board_canvas.create_image(i[0] * 100 + 50, i[1] * 100 + 50, image=board_obj.move_indicator, anchor='center')
-    for i in game_rep.generate_moves(board_obj, board_obj.focus_figure)[1]:
+    for i in board_obj.generate_moves(board_obj.focus_figure)[1]:
         board_canvas.create_image(i[0] * 100 + 50, i[1] * 100 + 50, image=board_obj.capture_indicator, anchor='center')

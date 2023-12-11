@@ -6,7 +6,7 @@ import game_representation as game_rep
 
 def detect_figure(board_obj, i, j):
     for figure_name in ['black_king', 'white_king', 'rook', 'queen']:
-        if (board_obj.figure_dict[figure_name] is not None and
+        if (figure_name in board_obj.figure_dict and
                 board_obj.figure_dict[figure_name].return_photo_by_int(board_obj.board_matrix[i][j])[0]):
             return board_obj.figure_dict[figure_name]
     return None
@@ -151,6 +151,8 @@ def detect_square(event, board_canvas, board_obj, label_show_side):
         else:
             board_canvas.delete('all'), draw_board(board_canvas, board_obj)
             board_obj.focus_figure, board_obj.focus_square = None, [None, None]
+    if board_obj.isGameEnded()[0]:
+        board_canvas.create_text(400, 400, text=board_obj.isGameEnded()[1], font='Arial 35', anchor='center')
     for i in ['black_king', 'white_king']:
         if board_obj.figure_dict[i] is not None and board_obj.isKingInCheck(board_obj.figure_dict[i],
                                                                             board_obj.move_side):

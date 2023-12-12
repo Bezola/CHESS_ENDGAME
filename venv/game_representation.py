@@ -117,8 +117,7 @@ class GameBoard:
                                 or (type(figure) is Rook and x != 0 and y != 0)):
                             break
                         else:
-                            if board_matrix[figure.place[0] + check_x][
-                                figure.place[1] + check_y] * move_side < 0:  # Фигуры противника
+                            if board_matrix[figure.place[0] + check_x][figure.place[1] + check_y] * move_side < 0:  # Фигуры противника
                                 lawfulcaptures_list.append([figure.place[0] + check_x, figure.place[1] + check_y])
                                 if board_matrix[figure.place[0] + check_x][figure.place[1] + check_y] * move_side == -4:
                                     check_x, check_y = check_x + x, check_y + y
@@ -144,19 +143,16 @@ class GameBoard:
                                 if lawless_move in lawfulcaptures_list:
                                     lawfulcaptures_list.remove(lawless_move)
                     else:
-                        for i in self.generate_moves(piece, move_side=move_side * -1):
+                        temp_matrix = board_matrix.copy()
+                        temp_matrix[piece.place[0]][piece.place[1]] = 0
+                        for i in self.generate_moves(piece, False, move_side * -1, temp_matrix):
                             for lawless_move in i:
                                 if lawless_move in lawfulmoves_list:
                                     lawfulmoves_list.remove(lawless_move)
                                 if lawless_move in lawfulcaptures_list:
                                     lawfulcaptures_list.remove(lawless_move)
-        elif func_recall:
-            for king_name in ['black_king', 'white_king']:
-                if king_name in self.figure_dict and self.figure_dict[king_name].color == figure.color:
-                    friend_king_obj = self.figure_dict[king_name]
-                    if self.isKingInCheck(friend_king_obj,
-                                          self.move_side * -1) and func_recall:  # Если король под шахом
-                        lawfulmoves_list, lawfulcaptures_list = self.moves_availability(figure)
+        elif func_recall and type(figure) is not King:
+            lawfulmoves_list, lawfulcaptures_list = self.moves_availability(figure, lawfulmoves_list, lawfulcaptures_list)
         return [lawfulmoves_list, lawfulcaptures_list]
 
     def isKingInCheck(self, king, move_side=None):
@@ -172,7 +168,7 @@ class GameBoard:
                 king.IsChecked = False
         return king.IsChecked
 
-    def moves_availability(self, friend_piece):
+    def moves_availability(self, friend_piece, init_moves, init_captures):
 
         move_list, capture_list = [], []
 
@@ -212,10 +208,52 @@ class GameBoard:
                                         if (friend_king_obj.place[0] != enemy_piece.place[0]
                                                 and friend_king_obj.place[1] != enemy_piece.place[1]):
                                             if x != enemy_piece.place[0] and y != enemy_piece.place[1]:
-                                                move_list.append([x, y])
+
+                                               move_list.append([x, y])
                                         else:
                                             move_list.append([x, y])
-        return move_list, capture_list
+                    return move_list, capture_list
+                else:  # Привязка фигуры
+                    for enemy_piece_name in ['rook', 'queen']:
+                        if (enemy_piece_name in self.figure_dict
+                                and friend_king_obj.color != self.figure_dict[enemy_piece_name].color):
+                            enemy_piece = self.figure_dict[enemy_piece_name]
+                            temp_matrix = self.board_matrix.copy()
+                            temp_matrix[friend_piece.place[0]][friend_piece.place[1]] = 0
+
+                            for friend_move in \
+                                    self.generate_moves(friend_piece, False, self.move_side, friend_moves_matrix)[
+                                        0]:  # Делаем проверку на перекрытие фигурой
+                                friend_moves_matrix[friend_move[0]][friend_move[1]] = 1
+
+                            for enemy_move in \
+                                    self.generate_moves(enemy_piece, False, self.move_side * -1, enemy_moves_matrix)[0]:
+                                enemy_moves_matrix[enemy_move[0]][enemy_move[1]] = 1
+
+                            if friend_king_obj.place in self.generate_moves(enemy_piece, False, self.move_side * - 1, temp_matrix)[1]:
+                                for x in range(min(friend_king_obj.place[0], enemy_piece.place[0]),
+                                               max(friend_king_obj.place[0], enemy_piece.place[0]) + 1):
+                                    for y in range(min(friend_king_obj.place[1], enemy_piece.place[1]),
+                                                   max(friend_king_obj.place[1], enemy_piece.place[1]) + 1):
+                                        if enemy_moves_matrix[x][y] == 1 and friend_moves_matrix[x][y] == 1:
+                                            capture_list = init_captures
+                                            if (friend_piece.place[0] != enemy_piece.place[0]
+                                                    and friend_piece.place[1] != enemy_piece.place[1]):
+                                                if x != enemy_piece.place[0] and y != enemy_piece.place[1]:
+                                                    move_list.append([x, y])
+                                            else:
+                                                move_list.append([x, y])
+                            else:
+                                return init_moves, init_captures
+                        else:
+                            return init_moves, init_captures
+                    try:
+                        move_list.remove(friend_king_obj.place)
+                    except ValueError:
+                        pass
+                    return move_list, capture_list
+
+        return init_moves, init_captures
 
     def isGameEnded(self):
         avaliable_moves_list = []

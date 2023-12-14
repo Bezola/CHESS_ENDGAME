@@ -51,7 +51,7 @@ class Queen(Figure):
 
 class GameBoard:
     def __init__(self):
-        self.temp_matrix = None
+        self.temp_matrix, self.isGameStopped = None, False
         self.move_indicator = ImageTk.PhotoImage((Image.open('imgs\\move-indicator.png')).resize((48, 36)))
         self.capture_indicator = ImageTk.PhotoImage((Image.open('imgs\\capture-indicator.png')).resize((100, 100)))
         self.figure_dict = {}
@@ -60,7 +60,14 @@ class GameBoard:
         self.focus_figure = None
         self.move_side = 1  # white = 1, black = -1
 
-    def random_content(self):
+    def random_content(self, rnd_btn=None, crt_btn=None, canvas=None, l_conclusion=None):
+        if rnd_btn is not None:
+            rnd_btn.destroy(), crt_btn.destroy(), canvas.destroy()
+            self.isGameStopped = False
+            self.board_matrix, self.move_side = np.zeros((8, 8)), 1
+        if l_conclusion is not None:
+            l_conclusion.destroy()
+
         self.figure_dict['black_king'] = King('Black', [random.randint(0, 7), random.randint(0, 7)])
         temp = self.figure_dict['black_king'].place
         self.board_matrix[temp[0]][temp[1]] = self.figure_dict['black_king'].f_type
@@ -99,6 +106,8 @@ class GameBoard:
             self.board_matrix[temp[0]][temp[1]] = self.figure_dict[figure_name].f_type
         print(self.board_matrix.transpose())
 
+    def user_content(self, figure):
+        print('Понял, вычёркиваю')
     def generate_moves(self, figure, func_recall=True, move_side=None, board_matrix=None):  # Просчёт правомерных ходов
         if move_side is None:
             move_side = self.move_side
@@ -217,6 +226,7 @@ class GameBoard:
                     for enemy_piece_name in ['rook', 'queen']:
                         if (enemy_piece_name in self.figure_dict
                                 and friend_king_obj.color != self.figure_dict[enemy_piece_name].color):
+                            print('проверка 2')
                             enemy_piece = self.figure_dict[enemy_piece_name]
                             temp_matrix = self.board_matrix.copy()
                             temp_matrix[friend_piece.place[0]][friend_piece.place[1]] = 0
@@ -229,8 +239,9 @@ class GameBoard:
                             for enemy_move in \
                                     self.generate_moves(enemy_piece, False, self.move_side * -1, enemy_moves_matrix)[0]:
                                 enemy_moves_matrix[enemy_move[0]][enemy_move[1]] = 1
-
-                            if friend_king_obj.place in self.generate_moves(enemy_piece, False, self.move_side * - 1, temp_matrix)[1]:
+                            print(temp_matrix)
+                            if friend_king_obj.place in self.generate_moves(enemy_piece, False, self.move_side * -1, temp_matrix)[1]:
+                                print('проверка 3')
                                 for x in range(min(friend_king_obj.place[0], enemy_piece.place[0]),
                                                max(friend_king_obj.place[0], enemy_piece.place[0]) + 1):
                                     for y in range(min(friend_king_obj.place[1], enemy_piece.place[1]),
@@ -245,32 +256,32 @@ class GameBoard:
                                                 move_list.append([x, y])
                             else:
                                 return init_moves, init_captures
-                        else:
-                            return init_moves, init_captures
-                    try:
-                        move_list.remove(friend_king_obj.place)
-                    except ValueError:
-                        pass
-                    return move_list, capture_list
+                            try:
+                                move_list.remove(friend_king_obj.place)
+                            except ValueError:
+                                pass
+                            return move_list, capture_list
 
         return init_moves, init_captures
 
     def isGameEnded(self):
         avaliable_moves_list = []
-        for king_obj in [self.figure_dict['black_king'], self.figure_dict['white_king']]:
-            if king_obj.f_type * self.move_side == 4:
-                check_list = [king_obj]
-                for piece_name in ['rook', 'queen']:
-                    if piece_name in self.figure_dict and king_obj.color == self.figure_dict[piece_name].color:
-                        check_list.append(self.figure_dict[piece_name])
-                    for figure in check_list:
-                        for move_list in self.generate_moves(figure):
-                            avaliable_moves_list += move_list
+        for king_name in ['white_king', 'black_king']:
+            if king_name in self.figure_dict:
+                king_obj = self.figure_dict[king_name]
+                if king_obj.f_type * self.move_side == 4:
+                    check_list = [king_obj]
+                    for piece_name in ['rook', 'queen']:
+                        if piece_name in self.figure_dict and king_obj.color == self.figure_dict[piece_name].color:
+                            check_list.append(self.figure_dict[piece_name])
+                        for figure in check_list:
+                            for move_list in self.generate_moves(figure):
+                                avaliable_moves_list += move_list
 
-                    if self.isKingInCheck(king_obj, self.move_side * -1) and len(avaliable_moves_list) == 0:
-                        won_color = ['White', 'Black']
-                        won_color.remove(king_obj.color)
-                        return [True, won_color[0] + ' won']
-                    elif len(avaliable_moves_list) == 0 or self.board_matrix.sum() == 0:
-                        return [True, 'Draw']
+                        if self.isKingInCheck(king_obj, self.move_side * -1) and len(avaliable_moves_list) == 0:
+                            won_color = ['White', 'Black']
+                            won_color.remove(king_obj.color)
+                            return [True, won_color[0] + ' won']
+                        elif len(avaliable_moves_list) == 0 or self.board_matrix.sum() == 0:
+                            return [True, 'Draw']
         return [False, 'Waiting to move']

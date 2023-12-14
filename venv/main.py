@@ -27,6 +27,7 @@ def window_in_center(work_window, w=100, h=100):
 
 class WindowManager:
     def __init__(self, master):
+        self.queen_index = None
         self.register_window = None
         self.root_window = None
         self.login_window = master
@@ -58,7 +59,7 @@ class WindowManager:
         # show_pswrd_btn.place(x=450, y=140)
 
         login_btn = tk.Button(text="Войти", font=font, command=lambda: (
-        register.login(self.login_window, login_box, password_box), self.program_start(self.login_window)))
+            register.login(self.login_window, login_box, password_box), self.program_start(self.login_window)))
         login_btn.place(x=250, y=200)
 
         register_btn = tk.Button(text="Создать аккаунт", font=font, command=lambda: self.reg_window(self.login_window))
@@ -96,12 +97,38 @@ class WindowManager:
                               command=lambda: register.register(self.register_window, reg_login_box, reg_password_box))
         login_btn.place(x=215, y=200)
 
+    def open_main_menu(self, board_obj, canvas_draw):
+        canvas = tk.Canvas(self.root_window, background='#e8e6e3', height=181, width=401)
+        rand_gen_btn = tk.Button(text="Случайная доска", font=font, anchor='center', command=lambda:
+        (board_obj.random_content(rand_gen_btn, create_btn, canvas),
+         board_render.draw_board(canvas_draw, board_obj, 800, 800)))
+        create_btn = tk.Button(text="Своя доска", font=font, anchor='center', command=lambda:
+        (self.create_board(board_obj, canvas_draw, [rand_gen_btn, create_btn, canvas]),
+         board_render.draw_board(canvas_draw, board_obj, 800, 800)))
+        canvas.place(x=300, y=410)
+        create_btn.place(x=430, y=430)
+        rand_gen_btn.place(x=400, y=520)
+
+    def create_board(self, board_obj, canvas_draw, destroy):
+        destroy[0].destroy(), destroy[1].destroy()
+
+        black_q_btn = tk.Button(text="За черных", font=font, width=10, anchor='center', command=lambda: (
+            self.set_queen(-1, black_q_btn, white_q_btn, destroy[2]), board_render.draw_board(canvas_draw, board_obj, 800, 800)))
+        white_q_btn = tk.Button(text="За белых", font=font, width=10, anchor='center', command=lambda: (
+            self.set_queen(1, black_q_btn, white_q_btn, destroy[2]), board_render.draw_board(canvas_draw, board_obj, 800, 800)))
+        black_q_btn.place(x=430, y=430)
+        white_q_btn.place(x=430, y=520)
+
+    def set_queen(self, index, btn1, btn2, cnv):
+        btn1.destroy(), btn2.destroy(), cnv.destroy()
+        self.queen_index = index
+
     def program_start(self, login_window):
         if register.pass_flag._value:
             login_window.destroy()
             self.root_window = tk.Tk()
             self.root_window.title("Chess endgame")
-            self.root_window.configure(bg='#dfd3b1')
+            self.root_window.configure(bg='#dfd3b1'), self.root_window.resizable(False, False)
             window_in_center(self.root_window, 1000, 1000)
 
             board_canvas = tk.Canvas(self.root_window, background='#dfd3b1', height=801, width=801,
@@ -111,11 +138,12 @@ class WindowManager:
             label_show_side.place(x=430, y=925)
 
             board_object = game_rep.GameBoard()
-            board_object.random_content()
+            self.open_main_menu(board_object, board_canvas)
             board_render.draw_board(board_canvas, board_object, 800, 800)
 
             board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas,
-                                                                                     board_object, label_show_side))
+                                                                                     board_object, label_show_side,
+                                                                                     self.root_window))
 
 
 # ------------Programm initializaion

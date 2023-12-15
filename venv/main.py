@@ -27,6 +27,7 @@ def window_in_center(work_window, w=100, h=100):
 
 class WindowManager:
     def __init__(self, master):
+        self.mode = 'game'
         self.queen_index = None
         self.register_window = None
         self.root_window = None
@@ -97,31 +98,36 @@ class WindowManager:
                               command=lambda: register.register(self.register_window, reg_login_box, reg_password_box))
         login_btn.place(x=215, y=200)
 
-    def open_main_menu(self, board_obj, canvas_draw):
+    def open_main_menu(self, board_obj, canvas_draw, label_show_side):
         canvas = tk.Canvas(self.root_window, background='#e8e6e3', height=181, width=401)
         rand_gen_btn = tk.Button(text="Случайная доска", font=font, anchor='center', command=lambda:
         (board_obj.random_content(rand_gen_btn, create_btn, canvas),
          board_render.draw_board(canvas_draw, board_obj, 800, 800)))
         create_btn = tk.Button(text="Своя доска", font=font, anchor='center', command=lambda:
-        (self.create_board(board_obj, canvas_draw, [rand_gen_btn, create_btn, canvas]),
+        (self.create_board(board_obj, canvas_draw, [rand_gen_btn, create_btn, canvas], label_show_side),
          board_render.draw_board(canvas_draw, board_obj, 800, 800)))
         canvas.place(x=300, y=410)
         create_btn.place(x=430, y=430)
         rand_gen_btn.place(x=400, y=520)
 
-    def create_board(self, board_obj, canvas_draw, destroy):
+    def create_board(self, board_obj, canvas_draw, destroy, label_show_side):
         destroy[0].destroy(), destroy[1].destroy()
 
-        black_q_btn = tk.Button(text="За черных", font=font, width=10, anchor='center', command=lambda: (
-            self.set_queen(-1, black_q_btn, white_q_btn, destroy[2]), board_render.draw_board(canvas_draw, board_obj, 800, 800)))
-        white_q_btn = tk.Button(text="За белых", font=font, width=10, anchor='center', command=lambda: (
-            self.set_queen(1, black_q_btn, white_q_btn, destroy[2]), board_render.draw_board(canvas_draw, board_obj, 800, 800)))
+        label = tk.Label(self.root_window, text='Кто будет\nиграть королевой?', font='Arial 15 bold', anchor='center', borderwidth=1, relief="solid", width=20)
+        black_q_btn = tk.Button(text="Черный", font=font, width=10, anchor='center', command=lambda: (
+            self.set_queen(0, black_q_btn, white_q_btn, destroy[2], label, canvas_draw, board_obj, label_show_side), board_render.draw_board(canvas_draw, board_obj, 800, 800)))
+        white_q_btn = tk.Button(text="Белый", font=font, width=10, anchor='center', command=lambda: (
+            self.set_queen(1, black_q_btn, white_q_btn, destroy[2], label, canvas_draw, board_obj, label_show_side), board_render.draw_board(canvas_draw, board_obj, 800, 800)))
+        label.place(x=360, y=330)
         black_q_btn.place(x=430, y=430)
         white_q_btn.place(x=430, y=520)
 
-    def set_queen(self, index, btn1, btn2, cnv):
-        btn1.destroy(), btn2.destroy(), cnv.destroy()
+    def set_queen(self, index, btn1, btn2, cnv, lbl, board_canvas, board_object, label_show_side):
+        btn1.destroy(), btn2.destroy(), cnv.destroy(), lbl.destroy()
         self.queen_index = index
+        board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas,
+                                                                                 board_object, label_show_side,
+                                                                                 self.root_window, 'create', self.queen_index))
 
     def program_start(self, login_window):
         if register.pass_flag._value:
@@ -138,7 +144,7 @@ class WindowManager:
             label_show_side.place(x=430, y=925)
 
             board_object = game_rep.GameBoard()
-            self.open_main_menu(board_object, board_canvas)
+            self.open_main_menu(board_object, board_canvas, label_show_side)
             board_render.draw_board(board_canvas, board_object, 800, 800)
 
             board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas,

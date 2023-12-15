@@ -70,7 +70,7 @@ def draw_move(board_canvas, board_obj, figure, new_place, label_show_side):
             PlaySound('sounds\\check.wav', SND_FILENAME | SND_ASYNC)
 
 
-def detect_square(event, board_canvas, board_obj, label_show_side, root_window, mode='game'):
+def detect_square(event, board_canvas, board_obj, label_show_side, root_window, mode='game', queen_index=0):
     x = event.x // 100
     y = event.y // 100
     click_coord = [x, y]
@@ -175,7 +175,21 @@ def detect_square(event, board_canvas, board_obj, label_show_side, root_window, 
                                          board_obj.figure_dict[i].place[1] * 100 + 30, text="!", fill="#ff7a66",
                                          font='Arial 35')
     elif mode == 'create':
-        print('kjdxfz')
+        figure_list = ['black_king', 'rook', 'queen', 'white_king']
+        draw_board(board_canvas, board_obj)
+        if board_obj.create_index < 4:
+            board_canvas.create_text(400, 400, text="Set place for " + figure_list[board_obj.create_index], fill="Black", font='Arial 20')
+        if board_obj.create_index > 3:  # если всё расставил
+            board_obj.create_index = 0
+            board_canvas.bind("<Button-1>", lambda event: detect_square(event, board_canvas,
+                                                                                     board_obj, label_show_side,
+                                                                                     root_window, 'game',
+                                                                                     queen_index))
+        elif not board_obj.user_content(figure_list[board_obj.create_index], queen_index, x, y):
+            PlaySound('sounds\\check.wav', SND_FILENAME | SND_ASYNC)
+        else:
+            board_obj.create_index += 1
+
 
 def draw_lawful_moves(board_canvas, board_obj):
     board_canvas.delete('all'), draw_board(board_canvas, board_obj)

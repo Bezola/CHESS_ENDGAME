@@ -2,7 +2,6 @@ from PIL import Image, ImageTk
 import numpy as np
 import random
 
-
 class Figure:  # Класс-мать, от него объекты не создавать!
     def __init__(self, color, place):
         self.color = color
@@ -51,6 +50,8 @@ class Queen(Figure):
 
 class GameBoard:
     def __init__(self):
+        self.create_index = 0
+        self.cords_list = []
         self.temp_matrix, self.isGameStopped = None, False
         self.move_indicator = ImageTk.PhotoImage((Image.open('imgs\\move-indicator.png')).resize((48, 36)))
         self.capture_indicator = ImageTk.PhotoImage((Image.open('imgs\\capture-indicator.png')).resize((100, 100)))
@@ -106,8 +107,47 @@ class GameBoard:
             self.board_matrix[temp[0]][temp[1]] = self.figure_dict[figure_name].f_type
         print(self.board_matrix.transpose())
 
-    def user_content(self, figure):
-        print('Понял, вычёркиваю')
+    def user_content(self, figure_name, start_figures_id, user_x, user_y):
+        temp = [user_x, user_y]
+        if temp not in self.cords_list:
+            if figure_name == 'black_king':
+                self.figure_dict['black_king'] = King('Black', [user_x, user_y])
+                self.board_matrix[temp[0]][temp[1]] = self.figure_dict['black_king'].f_type
+                self.cords_list.append(temp)
+                return True
+
+            if ((figure_name == 'white_king') and
+                    (temp not in self.generate_moves(self.figure_dict['black_king'], False, -1)[0])):
+                self.figure_dict[figure_name] = King('White', temp)
+                self.cords_list.append(temp)
+            if figure_name == 'rook':
+                print('----')
+                self.figure_dict[figure_name] = Rook(['White', 'Black'][start_figures_id], temp)
+                if self.isKingInCheck(self.figure_dict['black_king']):
+                    self.figure_dict[figure_name] = self.figure_dict.pop(figure_name)
+                    print('fall4')
+                    return False
+                else:
+                    self.cords_list.append(temp)
+            if figure_name == 'queen':
+                if self.figure_dict['rook'].f_type > 0:
+                    start_figures_id = 1
+                else:
+                    start_figures_id = 0
+                self.figure_dict[figure_name] = Queen(['White', 'Black'][start_figures_id], temp)
+                if self.isKingInCheck(self.figure_dict['black_king']):
+                    self.figure_dict[figure_name] = self.figure_dict.pop(figure_name)
+                    print('fall3')
+                    return False
+                else:
+                    self.cords_list.append(temp)
+            temp = self.figure_dict[figure_name].place
+            self.board_matrix[temp[0]][temp[1]] = self.figure_dict[figure_name].f_type
+            print('fall2', figure_name)
+            return True
+        print('fall1')
+        return False
+
     def generate_moves(self, figure, func_recall=True, move_side=None, board_matrix=None):  # Просчёт правомерных ходов
         if move_side is None:
             move_side = self.move_side
@@ -226,7 +266,6 @@ class GameBoard:
                     for enemy_piece_name in ['rook', 'queen']:
                         if (enemy_piece_name in self.figure_dict
                                 and friend_king_obj.color != self.figure_dict[enemy_piece_name].color):
-                            print('проверка 2')
                             enemy_piece = self.figure_dict[enemy_piece_name]
                             temp_matrix = self.board_matrix.copy()
                             temp_matrix[friend_piece.place[0]][friend_piece.place[1]] = 0
@@ -239,9 +278,7 @@ class GameBoard:
                             for enemy_move in \
                                     self.generate_moves(enemy_piece, False, self.move_side * -1, enemy_moves_matrix)[0]:
                                 enemy_moves_matrix[enemy_move[0]][enemy_move[1]] = 1
-                            print(temp_matrix)
                             if friend_king_obj.place in self.generate_moves(enemy_piece, False, self.move_side * -1, temp_matrix)[1]:
-                                print('проверка 3')
                                 for x in range(min(friend_king_obj.place[0], enemy_piece.place[0]),
                                                max(friend_king_obj.place[0], enemy_piece.place[0]) + 1):
                                     for y in range(min(friend_king_obj.place[1], enemy_piece.place[1]),

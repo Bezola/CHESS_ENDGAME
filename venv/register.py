@@ -5,7 +5,7 @@ import string
 import tkinter as tk
 from tkinter.messagebox import showwarning, showinfo
 
-pswrd_hardcode = string.ascii_lowercase + string.ascii_uppercase + '1234567890!@#$%^&*()_+'
+pswrd_hardcode = string.ascii_lowercase + string.ascii_uppercase + '1234567890!@#$%^&*()_`+'
 vigenere_dict = dict(zip(pswrd_hardcode, range(1, len(pswrd_hardcode) + 1)))
 
 
@@ -51,7 +51,7 @@ def vigenere_code(arrived_message, mode='code', key='default'):
     return str_answer
 
 
-def login(login_window, login_box, password_box):
+def login(login_box, password_box):
     login_name = vigenere_code(login_box.get())
     password_name = vigenere_code(password_box.get())
     global pass_flag
@@ -105,7 +105,6 @@ def register(reg_window, reg_login_box, reg_password_box):
                     users_data = []
                 if not user_is_exists:
                     users_data.append({'login': login_name, "password": password_name})
-                    # print('пользователь', login_name, 'зарегестрирован')
                     showinfo('Запись создана', 'Вы успешно зарегестрированы!')
                     json.dump(users_data, f)
                     reg_window.destroy()

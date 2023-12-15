@@ -1,11 +1,14 @@
 import os
 import sys
 import tkinter as tk
+
+import numpy as np
 import register
 import board_render
 import game_representation as game_rep
 from time import sleep
 import asyncio
+import json
 
 font = 'Georgia 15'
 show_password_setting = '*'
@@ -56,11 +59,8 @@ class WindowManager:
         password_box = tk.Entry(font=font, validate='key', validatecommand=check, show=show_password_setting)
         password_box.place(x=155, y=140)
 
-        # show_pswrd_btn = tk.Button(text="Показать пароль", font='Georgia 9', command=show_password)
-        # show_pswrd_btn.place(x=450, y=140)
-
         login_btn = tk.Button(text="Войти", font=font, command=lambda: (
-            register.login(self.login_window, login_box, password_box), self.program_start(self.login_window)))
+            register.login(login_box, password_box), self.program_start(self.login_window)))
         login_btn.place(x=250, y=200)
 
         register_btn = tk.Button(text="Создать аккаунт", font=font, command=lambda: self.reg_window(self.login_window))
@@ -71,7 +71,6 @@ class WindowManager:
     def reg_window(self, login_window):
         check = (login_window.register(register.password_ableness), "%P")
         self.register_window = tk.Toplevel(self.login_window)
-        # this forces all focus on the top level until Toplevel is closed
         self.register_window.grab_set()
         self.register_window.title("Регистрация")
         self.register_window.resizable(False, False)
@@ -90,27 +89,26 @@ class WindowManager:
                                     show=show_password_setting)
         reg_password_box.place(x=155, y=140)
 
-        # global reg_show_pswrd_btn
-        # reg_show_pswrd_btn = tk.Button(window, text="Показать пароль", font='Georgia 9', command=show_password)
-        # reg_show_pswrd_btn.place(x=450, y=140)
-
         login_btn = tk.Button(self.register_window, text="Регистрация", font=font,
                               command=lambda: register.register(self.register_window, reg_login_box, reg_password_box))
         login_btn.place(x=215, y=200)
 
-    def open_main_menu(self, board_obj, canvas_draw, label_show_side):
+    def open_main_menu(self, board_obj, canvas_draw, label_show_side, l_conc=None):
         canvas = tk.Canvas(self.root_window, background='#e8e6e3', height=181, width=401)
         rand_gen_btn = tk.Button(text="Случайная доска", font=font, anchor='center', command=lambda:
-        (board_obj.random_content(rand_gen_btn, create_btn, canvas),
+        (board_obj.random_content(rand_gen_btn, create_btn, canvas, l_conclusion=l_conc),
          board_render.draw_board(canvas_draw, board_obj, 800, 800)))
         create_btn = tk.Button(text="Своя доска", font=font, anchor='center', command=lambda:
-        (self.create_board(board_obj, canvas_draw, [rand_gen_btn, create_btn, canvas], label_show_side),
+        (self.create_board(board_obj, canvas_draw, [rand_gen_btn, create_btn, canvas], label_show_side, l_conc=l_conc),
          board_render.draw_board(canvas_draw, board_obj, 800, 800)))
         canvas.place(x=300, y=410)
         create_btn.place(x=430, y=430)
         rand_gen_btn.place(x=400, y=520)
 
-    def create_board(self, board_obj, canvas_draw, destroy, label_show_side):
+    def create_board(self, board_obj, canvas_draw, destroy, label_show_side, l_conc=None):
+        if l_conc is not None:
+            l_conc.destroy()
+        board_obj.board_matrix = np.zeros((8, 8))
         destroy[0].destroy(), destroy[1].destroy()
 
         label = tk.Label(self.root_window, text='Кто будет\nиграть королевой?', font='Arial 15 bold', anchor='center', borderwidth=1, relief="solid", width=20)
@@ -127,7 +125,8 @@ class WindowManager:
         self.queen_index = index
         board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas,
                                                                                  board_object, label_show_side,
-                                                                                 self.root_window, 'create', self.queen_index))
+                                                                                 self.root_window, 'create',
+                                                                                 self.queen_index, window_obj=self))
 
     def program_start(self, login_window):
         if register.pass_flag._value:
@@ -149,7 +148,7 @@ class WindowManager:
 
             board_canvas.bind("<Button-1>", lambda event: board_render.detect_square(event, board_canvas,
                                                                                      board_object, label_show_side,
-                                                                                     self.root_window))
+                                                                                     self.root_window, window_obj=self))
 
 
 # ------------Programm initializaion

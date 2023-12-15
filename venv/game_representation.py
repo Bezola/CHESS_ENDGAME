@@ -2,6 +2,7 @@ from PIL import Image, ImageTk
 import numpy as np
 import random
 
+
 class Figure:  # Класс-мать, от него объекты не создавать!
     def __init__(self, color, place):
         self.color = color
@@ -64,10 +65,10 @@ class GameBoard:
     def random_content(self, rnd_btn=None, crt_btn=None, canvas=None, l_conclusion=None):
         if rnd_btn is not None:
             rnd_btn.destroy(), crt_btn.destroy(), canvas.destroy()
-            self.isGameStopped = False
-            self.board_matrix, self.move_side = np.zeros((8, 8)), 1
+            self.isGameStopped, self.move_side = False, 1
         if l_conclusion is not None:
             l_conclusion.destroy()
+        self.board_matrix = np.zeros((8, 8))
 
         self.figure_dict['black_king'] = King('Black', [random.randint(0, 7), random.randint(0, 7)])
         temp = self.figure_dict['black_king'].place
@@ -116,16 +117,16 @@ class GameBoard:
                 self.cords_list.append(temp)
                 return True
 
-            if ((figure_name == 'white_king') and
-                    (temp not in self.generate_moves(self.figure_dict['black_king'], False, -1)[0])):
-                self.figure_dict[figure_name] = King('White', temp)
-                self.cords_list.append(temp)
+            if figure_name == 'white_king':
+                if temp not in self.generate_moves(self.figure_dict['black_king'], False, -1)[0]:
+                    self.figure_dict[figure_name] = King('White', temp)
+                    self.cords_list.append(temp)
+                else:
+                    return False
             if figure_name == 'rook':
-                print('----')
                 self.figure_dict[figure_name] = Rook(['White', 'Black'][start_figures_id], temp)
                 if self.isKingInCheck(self.figure_dict['black_king']):
                     self.figure_dict[figure_name] = self.figure_dict.pop(figure_name)
-                    print('fall4')
                     return False
                 else:
                     self.cords_list.append(temp)
@@ -137,15 +138,12 @@ class GameBoard:
                 self.figure_dict[figure_name] = Queen(['White', 'Black'][start_figures_id], temp)
                 if self.isKingInCheck(self.figure_dict['black_king']):
                     self.figure_dict[figure_name] = self.figure_dict.pop(figure_name)
-                    print('fall3')
                     return False
                 else:
                     self.cords_list.append(temp)
             temp = self.figure_dict[figure_name].place
             self.board_matrix[temp[0]][temp[1]] = self.figure_dict[figure_name].f_type
-            print('fall2', figure_name)
             return True
-        print('fall1')
         return False
 
     def generate_moves(self, figure, func_recall=True, move_side=None, board_matrix=None):  # Просчёт правомерных ходов
@@ -166,7 +164,8 @@ class GameBoard:
                                 or (type(figure) is Rook and x != 0 and y != 0)):
                             break
                         else:
-                            if board_matrix[figure.place[0] + check_x][figure.place[1] + check_y] * move_side < 0:  # Фигуры противника
+                            if board_matrix[figure.place[0] + check_x][
+                                figure.place[1] + check_y] * move_side < 0:  # Фигуры противника
                                 lawfulcaptures_list.append([figure.place[0] + check_x, figure.place[1] + check_y])
                                 if board_matrix[figure.place[0] + check_x][figure.place[1] + check_y] * move_side == -4:
                                     check_x, check_y = check_x + x, check_y + y
@@ -201,7 +200,8 @@ class GameBoard:
                                 if lawless_move in lawfulcaptures_list:
                                     lawfulcaptures_list.remove(lawless_move)
         elif func_recall and type(figure) is not King:
-            lawfulmoves_list, lawfulcaptures_list = self.moves_availability(figure, lawfulmoves_list, lawfulcaptures_list)
+            lawfulmoves_list, lawfulcaptures_list = self.moves_availability(figure, lawfulmoves_list,
+                                                                            lawfulcaptures_list)
         return [lawfulmoves_list, lawfulcaptures_list]
 
     def isKingInCheck(self, king, move_side=None):
@@ -257,8 +257,7 @@ class GameBoard:
                                         if (friend_king_obj.place[0] != enemy_piece.place[0]
                                                 and friend_king_obj.place[1] != enemy_piece.place[1]):
                                             if x != enemy_piece.place[0] and y != enemy_piece.place[1]:
-
-                                               move_list.append([x, y])
+                                                move_list.append([x, y])
                                         else:
                                             move_list.append([x, y])
                     return move_list, capture_list
@@ -278,7 +277,8 @@ class GameBoard:
                             for enemy_move in \
                                     self.generate_moves(enemy_piece, False, self.move_side * -1, enemy_moves_matrix)[0]:
                                 enemy_moves_matrix[enemy_move[0]][enemy_move[1]] = 1
-                            if friend_king_obj.place in self.generate_moves(enemy_piece, False, self.move_side * -1, temp_matrix)[1]:
+                            if friend_king_obj.place in \
+                                    self.generate_moves(enemy_piece, False, self.move_side * -1, temp_matrix)[1]:
                                 for x in range(min(friend_king_obj.place[0], enemy_piece.place[0]),
                                                max(friend_king_obj.place[0], enemy_piece.place[0]) + 1):
                                     for y in range(min(friend_king_obj.place[1], enemy_piece.place[1]),

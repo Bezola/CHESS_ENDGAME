@@ -12,7 +12,7 @@ def detect_figure(board_obj, i, j):
     return None
 
 
-def draw_board(board_canvas, board_obj, height=800, width=800):
+def draw_board(board_canvas, board_obj, height=800, width=800, create=None):
     quad_h, quad_w, place_x, place_y = height / 8, width / 8, 0, 0
     for i in range(8):
         for j in range(8):
@@ -30,6 +30,9 @@ def draw_board(board_canvas, board_obj, height=800, width=800):
         place_y, quad_h = 0, 100
         place_x += 100
         quad_w += 100
+
+    if create is not None:
+        board_canvas.create_text(400, 400, text="Set place for " + create, fill="Black", font='Arial 20')
 
     for i in ['black_king', 'white_king']:
         if i in board_obj.figure_dict and board_obj.isKingInCheck(board_obj.figure_dict[i], board_obj.move_side * -1):
@@ -70,7 +73,7 @@ def draw_move(board_canvas, board_obj, figure, new_place, label_show_side):
             PlaySound('sounds\\check.wav', SND_FILENAME | SND_ASYNC)
 
 
-def detect_square(event, board_canvas, board_obj, label_show_side, root_window, mode='game', queen_index=0):
+def detect_square(event, board_canvas, board_obj, label_show_side, root_window, mode='game', queen_index=0, window_obj=None):
     x = event.x // 100
     y = event.y // 100
     click_coord = [x, y]
@@ -158,14 +161,7 @@ def detect_square(event, board_canvas, board_obj, label_show_side, root_window, 
         if board_obj.isGameEnded()[0] and not board_obj.isGameStopped:
             l_conclusion = tk.Label(root_window, text=board_obj.isGameEnded()[1], font='Arial 35 bold', anchor='center', borderwidth=1, relief="solid", width=10)
             board_obj.isGameStopped = True
-            canvas = tk.Canvas(root_window, background='#e8e6e3', height=181, width=401)
-            rand_gen_btn = tk.Button(text="Случайная доска", font='Georgia 15', anchor='center', command=lambda:
-            (board_obj.random_content(rand_gen_btn, create_btn, canvas, l_conclusion),
-             draw_board(board_canvas, board_obj, 800, 800)))
-            create_btn = tk.Button(text="Своя доска", font='Georgia 15', anchor='center')
-            canvas.place(x=300, y=410)
-            create_btn.place(x=430, y=430)
-            rand_gen_btn.place(x=400, y=520)
+            window_obj.open_main_menu(board_obj, board_canvas, label_show_side, l_conc=l_conclusion)
             l_conclusion.place(x=340, y=330)
             label_show_side.config(text='Ход белых', bg='white', fg='black')
         for i in ['black_king', 'white_king']:
@@ -176,19 +172,22 @@ def detect_square(event, board_canvas, board_obj, label_show_side, root_window, 
                                          font='Arial 35')
     elif mode == 'create':
         figure_list = ['black_king', 'rook', 'queen', 'white_king']
-        draw_board(board_canvas, board_obj)
         if board_obj.create_index < 4:
-            board_canvas.create_text(400, 400, text="Set place for " + figure_list[board_obj.create_index], fill="Black", font='Arial 20')
+            draw_board(board_canvas, board_obj, create=figure_list[board_obj.create_index])
         if board_obj.create_index > 3:  # если всё расставил
             board_obj.create_index = 0
-            board_canvas.bind("<Button-1>", lambda event: detect_square(event, board_canvas,
-                                                                                     board_obj, label_show_side,
-                                                                                     root_window, 'game',
-                                                                                     queen_index))
+            board_canvas.bind("<Button-1>", lambda event: detect_square(event,
+                                                                        board_canvas, board_obj, label_show_side,
+                                                                        root_window, 'game', queen_index, window_obj=window_obj))
         elif not board_obj.user_content(figure_list[board_obj.create_index], queen_index, x, y):
             PlaySound('sounds\\check.wav', SND_FILENAME | SND_ASYNC)
         else:
             board_obj.create_index += 1
+            if board_obj.create_index < 4:
+                draw_board(board_canvas, board_obj, create=figure_list[board_obj.create_index])
+            else:
+                draw_board(board_canvas, board_obj)
+
 
 
 def draw_lawful_moves(board_canvas, board_obj):

@@ -101,9 +101,27 @@ def detect_square(event, board_canvas, board_obj, label_show_side, root_window, 
                             draw_move(board_canvas, board_obj, board_obj.focus_figure, click_coord, label_show_side)
                             board_obj.focus_figure = None
                             board_obj.move_side *= -1
+                            board_canvas.delete('all'), draw_board(board_canvas, board_obj)
                             PlaySound('sounds\\capture.wav', SND_FILENAME | SND_ASYNC)
 
-                else:  # ВЫБОР ФИГУРЫ/ВЗЯТИЕ ЧЕРНЫМИ
+                            if board_obj.isGameEnded()[0] and not board_obj.isGameStopped:
+                                l_conclusion = tk.Label(root_window, text=board_obj.isGameEnded()[1],
+                                                        font='Arial 35 bold', anchor='center', borderwidth=1,
+                                                        relief="solid", width=10)
+                                board_obj.isGameStopped = True
+                                window_obj.open_main_menu(board_obj, board_canvas, label_show_side, l_conc=l_conclusion)
+                                l_conclusion.place(x=340, y=330)
+                                label_show_side.config(text='Ход белых', bg='white', fg='black')
+                            else:
+                                move, figure = board_obj.computer_search(depth=4, final_move=True)  # Ход компьютера
+                                prev_coord, figure.place = figure.place, move
+                                board_obj.board_matrix[prev_coord[0]][prev_coord[1]] = 0
+                                board_obj.board_matrix[move[0]][move[1]] = figure.f_type
+                                board_obj.move_side *= -1
+                                board_canvas.delete('all'), draw_board(board_canvas, board_obj)
+                                PlaySound('sounds\\move.wav', SND_FILENAME | SND_ASYNC)
+
+                '''else:  # ВЫБОР ФИГУРЫ/ВЗЯТИЕ ЧЕРНЫМИ
                     if detect_figure(board_obj, x, y).f_type < 0:
                         board_obj.focus_square = click_coord
                         board_obj.focus_figure = detect_figure(board_obj, x, y)
@@ -125,7 +143,7 @@ def detect_square(event, board_canvas, board_obj, label_show_side, root_window, 
                             board_obj.move_side *= -1
 
                             PlaySound('sounds\\move.wav', SND_FILENAME | SND_ASYNC)
-                            PlaySound('sounds\\capture.wav', SND_FILENAME | SND_ASYNC)
+                            PlaySound('sounds\\capture.wav', SND_FILENAME | SND_ASYNC)'''
 
             elif board_obj.focus_figure is not None and click_coord in \
                     board_obj.generate_moves(board_obj.focus_figure)[0]:
@@ -135,7 +153,7 @@ def detect_square(event, board_canvas, board_obj, label_show_side, root_window, 
                 draw_move(board_canvas, board_obj, board_obj.focus_figure, click_coord, label_show_side)
                 board_obj.move_side *= -1
 
-                if detect_figure(board_obj, x, y).f_type < 0:  # Черные ход на пустую клетку
+                '''if detect_figure(board_obj, x, y).f_type < 0:  # Черные ход на пустую клетку
                     board_obj.focus_square = click_coord
                     prev_coord = board_obj.focus_figure.place
 
@@ -143,7 +161,7 @@ def detect_square(event, board_canvas, board_obj, label_show_side, root_window, 
                     board_obj.board_matrix[x][y] = board_obj.focus_figure.f_type
                     board_obj.focus_figure = None
 
-                    PlaySound('sounds\\move.wav', SND_FILENAME | SND_ASYNC)
+                    PlaySound('sounds\\move.wav', SND_FILENAME | SND_ASYNC)'''
 
                 if detect_figure(board_obj, x, y).f_type > 0:  # Белые ход на пустую клетку
                     board_obj.focus_square = click_coord
@@ -153,7 +171,24 @@ def detect_square(event, board_canvas, board_obj, label_show_side, root_window, 
                     board_obj.board_matrix[x][y] = board_obj.focus_figure.f_type
                     board_obj.focus_figure = None
 
+                    board_canvas.delete('all'), draw_board(board_canvas, board_obj)
                     PlaySound('sounds\\move.wav', SND_FILENAME | SND_ASYNC)
+
+                    if board_obj.isGameEnded()[0] and not board_obj.isGameStopped:
+                        l_conclusion = tk.Label(root_window, text=board_obj.isGameEnded()[1], font='Arial 35 bold',
+                                                anchor='center', borderwidth=1, relief="solid", width=10)
+                        board_obj.isGameStopped = True
+                        window_obj.open_main_menu(board_obj, board_canvas, label_show_side, l_conc=l_conclusion)
+                        l_conclusion.place(x=340, y=330)
+                        label_show_side.config(text='Ход белых', bg='white', fg='black')
+                    else:
+                        move, figure = board_obj.computer_search(depth=4, final_move=True)  # Ход компьютера
+                        prev_coord, figure.place = figure.place, move
+                        board_obj.board_matrix[prev_coord[0]][prev_coord[1]] = 0
+                        board_obj.board_matrix[move[0]][move[1]] = figure.f_type
+                        board_obj.move_side *= -1
+                        board_canvas.delete('all'), draw_board(board_canvas, board_obj)
+                        PlaySound('sounds\\move.wav', SND_FILENAME | SND_ASYNC)
 
             else:
                 board_canvas.delete('all'), draw_board(board_canvas, board_obj)

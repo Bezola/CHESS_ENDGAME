@@ -106,6 +106,7 @@ class WindowManager:
         rand_gen_btn.place(x=400, y=520)
 
     def create_board(self, board_obj, canvas_draw, destroy, label_show_side, l_conc=None):
+        board_obj.move_side = 1
         if l_conc is not None:
             l_conc.destroy()
         board_obj.board_matrix = np.zeros((8, 8))
@@ -140,7 +141,7 @@ class WindowManager:
                                      highlightthickness=0)
             board_canvas.place(x=100, y=100)
             label_show_side = tk.Label(self.root_window, text='Ход белых', font=font, anchor='center', width=10)
-            label_show_side.place(x=430, y=925)
+            # label_show_side.place(x=430, y=925)
 
             board_object = game_rep.GameBoard()
             self.open_main_menu(board_object, board_canvas, label_show_side)
